@@ -23,8 +23,8 @@ gemfile:
 matrix:
   include:
     - rvm: 2.3.7
-      script: bundle exec rubocop --parallel
-      env: DB=rubocop # make travis build display nicer
+      script: bundle exec standard
+      env: DB=standard # make travis build display nicer
   allow_failures:
     - rvm: ruby-head
   fast_finish: true

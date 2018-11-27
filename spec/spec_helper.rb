@@ -9,7 +9,7 @@ end
 require "rails_app/config/environment"
 require "rspec/rails"
 require "audited"
-require "audited-rspec"
+require "audited_rspec"
 require "audited_spec_helpers"
 require "support/active_record/models"
 

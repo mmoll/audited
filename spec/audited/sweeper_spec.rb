@@ -124,7 +124,8 @@ describe Audited::Sweeper do
       expect(instance.controller).to eq("thread2 controller instance")
     }
 
-    t1.join; t2.join
+    t1.join
+    t2.join
 
     expect(instance.controller).to be_nil
   end

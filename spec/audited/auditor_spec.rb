@@ -30,7 +30,9 @@ describe Audited::Auditor do
 
             audited if: :foo?
 
-            private def foo?
+            private
+
+            def foo?
               true
             end
           end

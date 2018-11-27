@@ -1,5 +1,6 @@
-$:.push File.expand_path("../lib", __FILE__)
+$LOAD_PATH.push File.expand_path("../lib", __FILE__)
 require "audited/version"
+require "English"
 
 Gem::Specification.new do |gem|
   gem.name        = "audited"
@@ -12,7 +13,7 @@ Gem::Specification.new do |gem|
   gem.homepage    = "https://github.com/collectiveidea/audited"
   gem.license     = "MIT"
 
-  gem.files = `git ls-files`.split($\).reject {|f| f =~ /(\.gemspec)/ }
+  gem.files = `git ls-files`.split($OUTPUT_RECORD_SEPARATOR).reject {|f| f =~ /(\.gemspec)/ }
 
   gem.required_ruby_version = ">= 2.3.0"
 

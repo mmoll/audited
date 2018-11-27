@@ -100,6 +100,10 @@ module Audited
         end
       end
 
+      def respond_to_missing?(method_name, include_private = false)
+        method_name == :version
+      end
+
       # Temporarily turns off auditing while saving.
       def save_without_auditing
         without_auditing { save }
@@ -332,7 +336,8 @@ module Audited
         audits.each { |audit| attributes.merge!(audit.new_attributes) }
         attributes
       end
-    end # InstanceMethods
+    end
+    # InstanceMethods
 
     module AuditedClassMethods
       # Returns an array of columns that are audited. See non_audited_columns

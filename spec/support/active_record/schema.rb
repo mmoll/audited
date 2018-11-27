@@ -1,12 +1,12 @@
-require 'active_record'
-require 'logger'
+require "active_record"
+require "logger"
 
 begin
   db_config = ActiveRecord::Base.configurations[Rails.env].clone
-  db_type = db_config['adapter']
-  db_name = db_config.delete('database')
-  raise Exception.new('No database name specified.') if db_name.blank?
-  if db_type == 'sqlite3'
+  db_type = db_config["adapter"]
+  db_name = db_config.delete("database")
+  raise Exception, "No database name specified." if db_name.blank?
+  if db_type == "sqlite3"
     db_file = Pathname.new(__FILE__).dirname.join(db_name)
     db_file.unlink if db_file.file?
   else
@@ -22,7 +22,7 @@ rescue => e
   Kernel.warn e
 end
 
-logfile = Pathname.new(__FILE__).dirname.join('debug.log')
+logfile = Pathname.new(__FILE__).dirname.join("debug.log")
 logfile.unlink if logfile.file?
 ActiveRecord::Base.logger = Logger.new(logfile)
 
@@ -75,9 +75,9 @@ ActiveRecord::Schema.define do
     t.column :created_at, :datetime
   end
 
-  add_index :audits, [:auditable_id, :auditable_type], name: 'auditable_index'
-  add_index :audits, [:associated_id, :associated_type], name: 'associated_index'
-  add_index :audits, [:user_id, :user_type], name: 'user_index'
+  add_index :audits, [:auditable_id, :auditable_type], name: "auditable_index"
+  add_index :audits, [:associated_id, :associated_type], name: "associated_index"
+  add_index :audits, [:user_id, :user_type], name: "user_index"
   add_index :audits, :request_uuid
   add_index :audits, :created_at
 end

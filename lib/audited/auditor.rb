@@ -139,7 +139,7 @@ module Audited
       # Get a specific revision specified by the version number, or +:previous+
       # Returns nil for versions greater than revisions count
       def revision(version)
-        if version == :previous || self.audits.last.version >= version
+        if version == :previous || audits.last.version >= version
           revision_with Audited.audit_class.reconstruct_attributes(audits_to(version))
         end
       end
@@ -158,10 +158,10 @@ module Audited
 
       # Returns a list combined of record audits and associated audits.
       def own_and_associated_audits
-        Audited.audit_class.unscoped
-        .where('(auditable_type = :type AND auditable_id = :id) OR (associated_type = :type AND associated_id = :id)',
-          type: self.class.name, id: id)
-        .order(created_at: :desc)
+        Audited.audit_class.unscoped.
+          where("(auditable_type = :type AND auditable_id = :id) OR (associated_type = :type AND associated_id = :id)",
+            type: self.class.name, id: id).
+          order(created_at: :desc)
       end
 
       # Combine multiple audits into one.
@@ -181,12 +181,12 @@ module Audited
       def revision_with(attributes)
         dup.tap do |revision|
           revision.id = id
-          revision.send :instance_variable_set, '@new_record', destroyed?
-          revision.send :instance_variable_set, '@persisted', !destroyed?
-          revision.send :instance_variable_set, '@readonly', false
-          revision.send :instance_variable_set, '@destroyed', false
-          revision.send :instance_variable_set, '@_destroyed', false
-          revision.send :instance_variable_set, '@marked_for_destruction', false
+          revision.send :instance_variable_set, "@new_record", destroyed?
+          revision.send :instance_variable_set, "@persisted", !destroyed?
+          revision.send :instance_variable_set, "@readonly", false
+          revision.send :instance_variable_set, "@destroyed", false
+          revision.send :instance_variable_set, "@_destroyed", false
+          revision.send :instance_variable_set, "@marked_for_destruction", false
           Audited.audit_class.assign_revision_attributes(revision, attributes)
 
           # Remove any association proxies so that they will be recreated
@@ -220,16 +220,15 @@ module Audited
 
       def normalize_enum_changes(changes)
         self.class.defined_enums.each do |name, values|
-          if changes.has_key?(name)
-            changes[name] = \
-              if changes[name].is_a?(Array)
-                changes[name].map { |v| values[v] }
-              elsif rails_below?('5.0')
-                changes[name]
-              else
-                values[changes[name]]
-              end
-          end
+          next unless changes.key?(name)
+          changes[name] = \
+            if changes[name].is_a?(Array)
+              changes[name].map { |v| values[v] }
+            elsif rails_below?("5.0")
+              changes[name]
+            else
+              values[changes[name]]
+            end
         end
         changes
       end
@@ -240,31 +239,33 @@ module Audited
 
       def audits_to(version = nil)
         if version == :previous
-          version = if self.audit_version
-                      self.audit_version - 1
-                    else
-                      previous = audits.descending.offset(1).first
-                      previous ? previous.version : 1
-                    end
+          version = if audit_version
+            audit_version - 1
+          else
+            previous = audits.descending.offset(1).first
+            previous ? previous.version : 1
+          end
         end
         audits.to_version(version)
       end
 
       def audit_create
-        write_audit(action: 'create', audited_changes: audited_attributes,
+        write_audit(action: "create", audited_changes: audited_attributes,
                     comment: audit_comment)
       end
 
       def audit_update
         unless (changes = audited_changes).empty? && audit_comment.blank?
-          write_audit(action: 'update', audited_changes: changes,
+          write_audit(action: "update", audited_changes: changes,
                       comment: audit_comment)
         end
       end
 
       def audit_destroy
-        write_audit(action: 'destroy', audited_changes: audited_attributes,
-                    comment: audit_comment) unless new_record?
+        unless new_record?
+          write_audit(action: "destroy", audited_changes: audited_attributes,
+                      comment: audit_comment)
+        end
       end
 
       def write_audit(attrs)
@@ -274,7 +275,7 @@ module Audited
         if auditing_enabled
           run_callbacks(:audit) {
             audit = audits.create(attrs)
-            combine_audits_if_needed if attrs[:action] != 'create'
+            combine_audits_if_needed if attrs[:action] != "create"
             audit
           }
         end
@@ -288,8 +289,8 @@ module Audited
 
       def comment_required_state?
         auditing_enabled &&
-          ((audited_options[:on].include?(:create) && self.new_record?) ||
-          (audited_options[:on].include?(:update) && self.persisted? && self.changed?))
+          ((audited_options[:on].include?(:create) && new_record?) ||
+          (audited_options[:on].include?(:update) && persisted? && changed?))
       end
 
       def combine_audits_if_needed
@@ -303,7 +304,7 @@ module Audited
       def require_comment
         if auditing_enabled && audit_comment.blank?
           errors.add(:audit_comment, "Comment can't be blank!")
-          return false if Rails.version.start_with?('4.')
+          return false if Rails.version.start_with?("4.")
           throw(:abort)
         end
       end
@@ -313,7 +314,7 @@ module Audited
       end
 
       def auditing_enabled
-        return run_conditional_check(audited_options[:if]) &&
+        run_conditional_check(audited_options[:if]) &&
           run_conditional_check(audited_options[:unless], matching: false) &&
           self.class.auditing_enabled
       end

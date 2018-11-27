@@ -1,4 +1,4 @@
-require 'set'
+require "set"
 
 module Audited
   # Audit saves the changes to ActiveRecord models.  It has the following attributes:
@@ -45,16 +45,16 @@ module Audited
 
     serialize :audited_changes, YAMLIfTextColumnType
 
-    scope :ascending,     ->{ reorder(version: :asc) }
-    scope :descending,    ->{ reorder(version: :desc)}
-    scope :creates,       ->{ where(action: 'create')}
-    scope :updates,       ->{ where(action: 'update')}
-    scope :destroys,      ->{ where(action: 'destroy')}
+    scope :ascending,     -> { reorder(version: :asc) }
+    scope :descending,    -> { reorder(version: :desc)}
+    scope :creates,       -> { where(action: "create")}
+    scope :updates,       -> { where(action: "update")}
+    scope :destroys,      -> { where(action: "destroy")}
 
-    scope :up_until,      ->(date_or_time){ where("created_at <= ?", date_or_time) }
-    scope :from_version,  ->(version){ where('version >= ?', version) }
-    scope :to_version,    ->(version){ where('version <= ?', version) }
-    scope :auditable_finder, ->(auditable_id, auditable_type){ where(auditable_id: auditable_id, auditable_type: auditable_type)}
+    scope :up_until,      ->(date_or_time) { where("created_at <= ?", date_or_time) }
+    scope :from_version,  ->(version) { where("version >= ?", version) }
+    scope :to_version,    ->(version) { where("version <= ?", version) }
+    scope :auditable_finder, ->(auditable_id, auditable_type) { where(auditable_id: auditable_id, auditable_type: auditable_type)}
     # Return all audits older than the current one.
     def ancestors
       self.class.ascending.auditable_finder(auditable_id, auditable_type).to_version(version)
@@ -71,31 +71,28 @@ module Audited
 
     # Returns a hash of the changed attributes with the new values
     def new_attributes
-      (audited_changes || {}).inject({}.with_indifferent_access) do |attrs, (attr, values)|
+      (audited_changes || {}).each_with_object({}.with_indifferent_access) do |(attr, values), attrs|
         attrs[attr] = values.is_a?(Array) ? values.last : values
-        attrs
       end
     end
 
     # Returns a hash of the changed attributes with the old values
     def old_attributes
-      (audited_changes || {}).inject({}.with_indifferent_access) do |attrs, (attr, values)|
+      (audited_changes || {}).each_with_object({}.with_indifferent_access) do |(attr, values), attrs|
         attrs[attr] = Array(values).first
-
-        attrs
       end
     end
 
     # Allows user to undo changes
     def undo
       case action
-      when 'create'
+      when "create"
         # destroys a newly created record
         auditable.destroy!
-      when 'destroy'
+      when "destroy"
         # creates a new record with the destroyed record attributes
         auditable_type.constantize.create!(audited_changes)
-      when 'update'
+      when "update"
         # changes back attributes
         auditable.update_attributes!(audited_changes.transform_values(&:first))
       else
@@ -112,15 +109,15 @@ module Audited
         self.user_as_model = user :
         self.username = user
     end
-    alias_method :user_as_model=, :user=
-    alias_method :user=, :user_as_string=
+    alias user_as_model= user=
+    alias user= user_as_string=
 
     # @private
     def user_as_string
       user_as_model || username
     end
-    alias_method :user_as_model, :user
-    alias_method :user, :user_as_string
+    alias user_as_model user
+    alias user user_as_string
 
     # Returns the list of classes that are being audited
     def self.audited_classes
@@ -131,7 +128,7 @@ module Audited
     # by +user+. This method is hopefully threadsafe, making it ideal
     # for background operations that require audit information.
     def self.as_user(user)
-      last_audited_user = ::Audited.store[:audited_user] 
+      last_audited_user = ::Audited.store[:audited_user]
       ::Audited.store[:audited_user] = user
       yield
     ensure
@@ -143,7 +140,7 @@ module Audited
       audits.each_with_object({}) do |audit, all|
         all.merge!(audit.new_attributes)
         all[:audit_version] = audit.version
-     end
+      end
     end
 
     # @private
@@ -151,11 +148,10 @@ module Audited
       attributes.each do |attr, val|
         record = record.dup if record.frozen?
 
-        if record.respond_to?("#{attr}=")
-          record.attributes.key?(attr.to_s) ?
-            record[attr] = val :
-            record.send("#{attr}=", val)
-        end
+        next unless record.respond_to?("#{attr}=")
+        record.attributes.key?(attr.to_s) ?
+          record[attr] = val :
+          record.send("#{attr}=", val)
       end
       record
     end

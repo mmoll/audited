@@ -28,13 +28,4 @@ matrix:
   allow_failures:
     - rvm: ruby-head
   fast_finish: true
-branches:
-  only:
-  - master
-  - /.*-stable$/
 sudo: false
-notifications:
-  webhooks:
-    urls:
-    - http://buildlight.collectiveidea.com/
-    on_start: always
